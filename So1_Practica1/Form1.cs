@@ -162,7 +162,8 @@ namespace So1_Practica1
                                 }
                                 else
                                 {
-                                     textBox2.AppendText(process.Numero + " en espera hasta que se libere " + recursos + "\n");
+                                    nuevoproc.Estado = false; 
+                                    textBox2.AppendText(process.Numero + " en espera hasta que se libere R" + recursos + "\n");
                                 }
                             }
 
@@ -172,6 +173,8 @@ namespace So1_Practica1
                                 if (type == "")
                                 {
                                     type = "Se libero ";
+
+
                                 }
                             }
 
@@ -180,13 +183,19 @@ namespace So1_Practica1
                     if (type != "")
                     {
                         textBox2.AppendText(type + rec + " a " + process.Numero + "\n");
-                        textBox2.AppendText("El proceso " + process.Numero + " se esta ejecutando\n");
+                        if(nuevoproc.Estado){
+                            textBox2.AppendText("El proceso " + process.Numero + " se esta ejecutando\n");
+                        }
                         procesos.Add(nuevoproc);
                     }
                 }
             }
         }
 
+        public void LiberarRecurso(String proc, int num){
+        
+        
+        }
 
         public Boolean BuscarRecursos(int num)
         {

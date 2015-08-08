@@ -11,7 +11,13 @@ namespace So1_Practica1
 
         String numero;
         String tipo;
+        bool estado = true;
 
+        public bool Estado
+        {
+            get { return estado; }
+            set { estado = value; }
+        }
         public String Tipo
         {
             get { return tipo; }
