@@ -86,6 +86,18 @@ namespace So1_Practica1
             rec.TrimEnd(',');
             return rec;          
         }
+        public bool Existe_Recurso_Menor(int num){
+
+            foreach (var item in this.recursos)
+            {
+                
+                if(item>num){
+                    return true;
+                }
+            }
+
+            return false; 
+        }
     
     }
 }
