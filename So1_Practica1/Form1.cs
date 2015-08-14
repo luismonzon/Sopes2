@@ -15,8 +15,8 @@ namespace So1_Practica1
     {
 
         List<Tiempo> instrucciones;
-        List<Tiempo> Cola;
         List<Proceso> procesos;
+        Stack<Proceso> dependencias = new Stack<Proceso>();
         public Form1()
         {
             InitializeComponent();
@@ -30,10 +30,15 @@ namespace So1_Practica1
             Gramatica gramatica = new Gramatica();
             Parser parser = new Parser(gramatica);
             ParseTree raiz = parser.Parse(this.textBox1.Text);
+            this.textBox2.Clear();
             if (raiz.Root != null)
             {
                 this.Analize(raiz.Root, null);
                 Ejecutar();
+                Console.Write("");
+                this.instrucciones.Clear();
+                this.procesos.Clear();
+                
             }
 
 
@@ -122,28 +127,54 @@ namespace So1_Practica1
         }
 
 
+
+        public void Ordenar() {
+
+            foreach (var item in this.instrucciones)
+            {
+
+                foreach (var item2 in  item.procesos)
+                {
+                    
+                    
+
+                }
+
+
+            }
+
+        }
+
         public void Ejecutar()
         {
 
             foreach (var inst in this.instrucciones)
             {
-                textBox2.AppendText(inst.id + "---------------------------------------------\n");
+                textBox2.AppendText(inst.id + "-------------------------------------------------------------------------\n");
+                ImprimirEstados();
                 foreach (var process in inst.procesos)
                 {
 
                     string rec = "";
                     string type = "";
-                    Proceso nuevoproc = new Proceso(process.Numero);
+                    string bloqueados = "";
+                    Proceso nuevoproc = getProceso(process.Numero);
+                    if (nuevoproc == null)
+                    {
+                        nuevoproc = new Proceso(process.Numero);
+                        this.procesos.Add(nuevoproc);
+                    }
+
                     if (process.Tipo.Equals("f"))
                     {
 
                         textBox2.AppendText("Se finalizo el proceso " + process.Numero + "\n");
-                        TerminarProceso(process);
+                        TerminarProceso(process.Numero);
                     }
                     else
                     {
-                       
-                        foreach (var recursos in process.Recursos)
+
+                        foreach (int recursos in process.Recursos)
                         {
 
                             if (process.Tipo.Equals("s"))
@@ -151,7 +182,6 @@ namespace So1_Practica1
 
                                 if (!BuscarRecursos(recursos))
                                 {
-
                                     rec += "R" + recursos + ", ";
                                     nuevoproc.Recursos.Add(recursos);
                                     if (type == "")
@@ -162,8 +192,10 @@ namespace So1_Practica1
                                 }
                                 else
                                 {
-                                    nuevoproc.Estado = false; 
-                                    textBox2.AppendText(process.Numero + " en espera hasta que se libere R" + recursos + "\n");
+
+                                    nuevoproc.Estado = false;
+                                    nuevoproc.Esperando.Add(recursos);
+                                    bloqueados += "R" + recursos + ",";
                                 }
                             }
 
@@ -173,28 +205,159 @@ namespace So1_Practica1
                                 if (type == "")
                                 {
                                     type = "Se libero ";
-
-
+                                    this.LiberarRecurso(process.Numero, recursos);
+                                    nuevoproc = null;
                                 }
                             }
-
                         }
                     }
                     if (type != "")
                     {
                         textBox2.AppendText(type + rec + " a " + process.Numero + "\n");
-                        if(nuevoproc.Estado){
-                            textBox2.AppendText("El proceso " + process.Numero + " se esta ejecutando\n");
+                        if (nuevoproc != null)
+                        {
+                            if (nuevoproc.Estado)
+                            {
+                                textBox2.AppendText("El proceso " + process.Numero + " se esta ejecutando\n");
+                            }
+                            else
+                            {
+                                textBox2.AppendText(process.Numero + " en espera hasta que se libere " + bloqueados + "\n");
+                            }
                         }
-                        procesos.Add(nuevoproc);
                     }
+                    else { 
+                    textBox2.AppendText(process.Numero + " en espera hasta que se libere " + bloqueados + "\n");
+                    }
+                    
+                }
+                if(this.checkBox2.Checked){
+                    Interbloqueo();
                 }
             }
         }
 
-        public void LiberarRecurso(String proc, int num){
-        
-        
+        public void Interbloqueo()
+        {
+            foreach (var item in this.procesos)
+            {
+                if(!item.Estado){
+
+                recorre_inter(item);
+                break;
+                }
+            }
+
+            if(dependencias.Count>0){
+                dependencias.Clear();
+            }
+        }
+        public void recorre_inter(Proceso proceso)
+        {
+            if(proceso!=null &&!proceso.Estado){
+
+                if (!Ingresar_nodo(proceso)) {
+
+                    foreach (var item in proceso.Recursos)
+                    {
+                        recorre_inter(this.Proceso_Recurso_Bloqueado(item,proceso));
+
+                    }
+                
+                }
+            
+            
+            }
+
+        }
+        public bool Ingresar_nodo(Proceso nodo) 
+        {
+            bool band=false;
+            if (dependencias.Count == 0)
+            {
+                dependencias.Push(nodo);
+            }
+            else
+            {
+
+                foreach (var item in dependencias)
+                {
+                    if (item.Numero.Equals(nodo.Numero))
+                    {
+                       band=true;
+                        break;
+                    }
+                   
+                }
+                if(!band){
+                    dependencias.Push(nodo);
+                }
+            }
+            return band;
+        }
+
+        public Proceso Proceso_Recurso_Bloqueado(int num, Proceso proceso) 
+        {
+            
+
+            foreach (var item in this.procesos)
+            {
+               if(item.ExisteBloqueado(num)&&!item.Estado&&item.Numero!=proceso.Numero){
+
+                   bool terminar =false;
+                   foreach (var cola in this.dependencias)
+                   {
+                       if (cola.Numero.Equals(item.Numero)) {
+                           terminar = true;
+                           
+                           break;
+                       }
+                   }
+
+                   if(terminar){
+                       textBox2.AppendText("***Hay Interbloqueo***\n");
+                       return null;
+                   }
+                   return item;
+               }
+
+            }
+
+
+            return null;        
+        }
+
+
+      
+        public void ImprimirEstados()
+        {
+
+            foreach (var item in this.procesos)
+            {
+                if (item.Estado)
+                {
+                    textBox2.AppendText("El proceso " + item.Numero + " se esta ejecutando\n");
+                }
+                else
+                {
+                    textBox2.AppendText(item.Numero + " en espera hasta que se libere " + item.getBloqueados() + "\n");
+
+                }
+            }
+
+        }
+        public void LiberarRecurso(String proc, int num)
+        {
+
+            foreach (var item in this.procesos)
+            {
+                if (item.Numero.Equals(proc))
+                {
+                    item.LiberarRecurso(num);
+                    break;
+                }
+            }
+
         }
 
         public Boolean BuscarRecursos(int num)
@@ -210,10 +373,36 @@ namespace So1_Practica1
             return false;
         }
 
-        public void TerminarProceso(Proceso proceso)
+        public void TerminarProceso(string nombre)
         {
-            this.procesos.Remove(proceso);
+            foreach (var item in procesos)
+            {
+                if (item.Numero.Equals(nombre))
+                {
+                    procesos.Remove(item);
+                    break;
+                }
+
+            }
         }
 
+        public Proceso getProceso(String number)
+        {
+
+            foreach (var item in this.procesos)
+            {
+                if (item.Numero.Equals(number))
+                {
+                    return item;
+                }
+
+            }
+            return null;
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

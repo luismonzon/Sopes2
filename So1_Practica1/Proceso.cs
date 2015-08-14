@@ -11,7 +11,22 @@ namespace So1_Practica1
 
         String numero;
         String tipo;
-        bool estado = true;
+        bool estado;
+        List<int> recursos;
+        List<int> esperando;
+
+       
+        public Proceso(string num) {
+            estado = true;
+            numero = num;
+            recursos = new List<int>();
+            esperando = new List<int>();
+        }
+        public List<int> Esperando
+        {
+            get { return esperando; }
+            set { esperando = value; }
+        }
 
         public bool Estado
         {
@@ -23,27 +38,29 @@ namespace So1_Practica1
             get { return tipo; }
             set { tipo = value; }
         }
-
-        public Proceso(string num) {
-
-            numero = num;
-            recursos = new List<int>();
-        }
-
         public String Numero
         {
             get { return numero; }
             set { numero = value; }
         }
-        List<int> recursos;
-
+        
         public List<int> Recursos
         {
             get { return recursos; }
             set { recursos = value; }
         }
 
+        public bool ExisteBloqueado(int num) {
 
+            foreach (var item in this.esperando)
+            {
+                if(item.Equals(num)){
+                    return true;
+                }
+            }
+
+            return false;
+        }
         public bool ExisteRecurso(int num) {
 
             foreach (var item in Recursos)
@@ -54,5 +71,21 @@ namespace So1_Practica1
             }
             return false;
         }
+
+        public bool LiberarRecurso(int num){
+           return this.recursos.Remove(num);
+        
+        }
+
+        public String getBloqueados() {
+            string rec = "";
+            foreach (var item in this.esperando)
+	        {
+                rec += "R"+item+",";
+	        }
+            rec.TrimEnd(',');
+            return rec;          
+        }
+    
     }
 }
